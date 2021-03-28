@@ -1,41 +1,42 @@
-import React ,{Component} from 'react'
+import React ,{useEffect} from 'react'
 import Modal from '../../components/UI/Modal/Modal'
 import Aux from '../Auxilliary'
 const withErrorHandler = (WrappedComponent , axios) => {
-    return class extends Component {
-            state = {
-                error : null
-            }
+    return props => {
+            const[error,setError] = useEffect(null)
         
-        componentWillMount(){
-            this.reqInterceptor = axios.interceptors.request.use(req => {
-                this.setState({error : null})
+        
+            const reqInterceptor = axios.interceptors.request.use(req => {
+               setError(null)
                 return req
             })
-            this.resInterceptor = axios.interceptors.response.use(res => res,error => {
-                this.setState({ error : error})
+            const resInterceptor = axios.interceptors.response.use(res => res,err => {
+                setError(err)
             })
         }
-        componentWillUnmount(){
-            axios.interceptors.request.eject(this.reqInterceptor)
-            axios.interceptors.response.eject(this.resInterceptor)
+            useEffect(()=>{
+                return () => {
+                    axios.interceptors.request.eject(reqInterceptor)
+                    axios.interceptors.response.eject(resInterceptor)
+                }
+            },[reqInterceptor,resInterceptor])
+       
+        const errorConfirmed = () => {
+            setError(null)
         }
-        errorConfirmed = () => {
-            this.setState({error :null})
-        }
-        render(){
+        
             return (
                 <Aux>
-                <Modal show={this.state.error}
+                <Modal show={error}
                         clicked={this.errorConfirmed}>
-                    {this.state.error ? this.state.error.message : null}
+                    {error ? error.message : null}
                 </Modal>
-                <WrappedComponent {...this.props}>
+                <WrappedComponent {...props}>
         
                 </WrappedComponent>
             </Aux>
             )
-        }
+        
         
     }
    
